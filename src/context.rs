@@ -15,7 +15,9 @@ use crate::{
     features::Features,
     manifest::Manifest,
     metadata::{Metadata, Package, PackageId},
-    restore, rustup, term, ProcessBuilder,
+    restore, term,
+    version::VersionRange,
+    ProcessBuilder,
 };
 
 pub(crate) struct Context {
@@ -27,7 +29,6 @@ pub(crate) struct Context {
     pub(crate) cargo_version: u32,
     pub(crate) restore: restore::Manager,
     pub(crate) current_dir: PathBuf,
-    pub(crate) version_range: Option<Vec<(u32, String)>>,
 }
 
 impl Context {
@@ -64,7 +65,7 @@ impl Context {
             pkg_features.insert(id.clone(), features);
         }
 
-        let mut this = Self {
+        let this = Self {
             args,
             metadata,
             manifests,
@@ -73,14 +74,7 @@ impl Context {
             cargo_version,
             restore,
             current_dir: env::current_dir()?,
-            version_range: None,
         };
-
-        this.version_range = this
-            .args
-            .version_range
-            .map(|range| rustup::version_range(range, this.args.version_step.unwrap_or(1), &this))
-            .transpose()?;
 
         // TODO: Ideally, we should do this, but for now, we allow it as cargo-hack
         // may mistakenly interpret the specified valid feature flag as unknown.
@@ -146,6 +140,14 @@ impl Context {
         } else {
             Cow::Borrowed(&package.name)
         }
+    }
+
+    pub(crate) fn version_range(&self) -> Option<VersionRange> {
+        self.args.version_range
+    }
+
+    pub(crate) fn version_step(&self) -> Option<u16> {
+        self.args.version_step
     }
 
     pub(crate) fn cargo(&self) -> ProcessBuilder<'_> {
