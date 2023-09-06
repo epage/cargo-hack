@@ -54,7 +54,7 @@ pub(crate) struct Args {
     /// --version-range
     pub(crate) version_range: Option<VersionRange>,
     /// --version-step
-    pub(crate) version_step: Option<String>,
+    pub(crate) version_step: Option<u16>,
 
     // options for --each-feature and --feature-powerset
     /// --optional-deps [DEPS]...
@@ -538,6 +538,11 @@ impl Args {
             if clean_per_version {
                 requires("--clean-per-version", &["--version-range"])?;
             }
+        }
+
+        let version_step = version_step.as_deref().map(str::parse::<u16>).transpose()?;
+        if version_step == Some(0) {
+            bail!("--version-step cannot be zero");
         }
 
         if no_dev_deps {

@@ -25,7 +25,7 @@ impl Rustup {
 
 pub(crate) fn version_range(
     range: VersionRange,
-    step: Option<&str>,
+    step: u16,
     cx: &Context,
 ) -> Result<Vec<(u32, String)>> {
     let check = |version: &Version| {
@@ -101,11 +101,6 @@ pub(crate) fn version_range(
         MaybeVersion::Msrv => get_rust_version()?,
         MaybeVersion::Stable => get_stable_version()?,
     };
-
-    let step = step.map(str::parse::<u8>).transpose()?.unwrap_or(1);
-    if step == 0 {
-        bail!("--version-step cannot be zero");
-    }
 
     let versions: Vec<_> = (start_inclusive.minor..=end_inclusive.minor)
         .step_by(step as _)
